@@ -1,6 +1,8 @@
 #Creates the outputs specified in the word document tRNA-seq output 080719
 #starts at step 4
 import os
+if not os.path.exists("tRNA-seq-outputs/"):
+    os.makedirs("tRNA-seq-outputs")
 #Getting the list of seed sequences and creating a dictionary for their isodecoders
 
 SEQ_LIST = []
