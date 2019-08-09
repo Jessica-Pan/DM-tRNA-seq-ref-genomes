@@ -62,6 +62,8 @@ for fileName in os.listdir("sequence_alignments"):
         if COUNT % 100 == 0:
             print(COUNT)
         SEQ = fileName[:-4]
+        while SEQ[-1] != "A" and SEQ[-1] != "C":
+            SEQ = SEQ[:-1]
         handle = open("sequence_alignments/" + fileName)
         fileCounts = [0] * len(fancy_names)
         for line in handle:
@@ -111,17 +113,19 @@ decoderFractions = [0] * len(name_list)
 biggestDecoderFractions = [0] * len(name_list)
 for decoder in IsodecoderCounts:
     for i in range(len(name_list)):
-        decoderFractions[i] = float(IsodecoderCounts[decoder][i])/float(iso_total[i])
-        if decoderFractions[i] > biggestDecoderFractions[i]:
-            biggestDecoderFractions[i] = decoderFractions[i]
+        if iso_total[i] > 0:
+            decoderFractions[i] = float(IsodecoderCounts[decoder][i])/float(iso_total[i])
+            if decoderFractions[i] > biggestDecoderFractions[i]:
+                biggestDecoderFractions[i] = decoderFractions[i]
     output.write(decoder + "\t" + "\t".join([str(x) for x in decoderFractions]) + "\n")
 for decoder in IsodecoderCounts:
     for i in range(len(name_list)):
         if IsodecoderCounts[decoder][i] > 50:
-            if float(IsodecoderCounts[decoder][i])/float(iso_total[i]) >0.001 * float(biggestDecoderFractions[i]):
-                if decoder not in mutationIsodecoders:
-                    mutationIsodecoders.append(decoder)
-                break
+            if iso_total[i] > 0:
+                if float(IsodecoderCounts[decoder][i])/float(iso_total[i]) >0.001 * float(biggestDecoderFractions[i]):
+                    if decoder not in mutationIsodecoders:
+                        mutationIsodecoders.append(decoder)
+                    break
 output.close()
 
 #Acceptor output
@@ -131,10 +135,11 @@ for j in range(len(acc_total)):
         acc_total[j] += acceptorCounts[i][j]
 output = open("tRNA-seq-outputs/anticodon_fraction_output.txt", "w")
 output.write("Anticodon\t" + "\t".join([fancy_names[i] for i in name_list]) + "\n")
-acceptorFractions = [0] * len(name_list)
+acceptorFractions = [str(0)] * len(name_list)
 for anticodon in acceptorCounts:
     for i in range(len(name_list)):
-        acceptorFractions[i] = str(float(acceptorCounts[anticodon][i])/float(acc_total[i]))
+        if acc_total[i] > 0:
+            acceptorFractions[i] = str(float(acceptorCounts[anticodon][i])/float(acc_total[i]))
     output.write(anticodon + "\t" + "\t".join(acceptorFractions) + "\n")
 output.close()
 
@@ -144,7 +149,7 @@ print("making per sequence outputs")
 print(len(mutationIsodecoders))
 counter = 0
 charging_output = open("tRNA-seq-outputs/charging_output.txt", "w")
-charing_output.write("Isodecoder\t")
+charging_output.write("Isodecoder\t")
 for j in range(len(name_list)):
     charging_output.write("3'CCA count\t3'CC count\tTotal Count\tCharging level\t")
 charging_output.write("\n")
@@ -193,9 +198,12 @@ for decoder in mutationIsodecoders:
             for pos in range(len(seq)):
                 GRAND[-(pos + 1)][index][nucIndexes[seq[-(pos + 1)]]] += 1
     charging_output.write(decoder + "\t")
-    for elem in charing_list:
+    for elem in charging_list:
+        mutationFraction = str(0)
+        if sum(elem) > 0:
+            mutationFraction = str(float(elem[0])/float(sum(elem)))
         charging_output.write(str(elem[0]) + "\t" + str(elem[1]) + "\t" + str(sum(elem)) + \
-                              "\t" + str(float(elem[0])/float(sum(elem))) + "\t")
+                              "\t" + mutationFraction + "\t")
     charging_output.write("\n")
     for i in range(len(SEQ)):
         output.write(str(i) + "\t" + SEQ[i] + "\t")
