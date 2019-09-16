@@ -1,5 +1,6 @@
 #Creates the outputs specified in the word document tRNA-seq output 080719
 #starts at step 4
+#Last updated: 9/15/2019
 import os
 if not os.path.exists("tRNA-seq-outputs/"):
     os.makedirs("tRNA-seq-outputs")
@@ -88,7 +89,7 @@ for fileName in os.listdir("sequence_alignments"):
 
         handle.close()
 
-#making the three outputs
+#making the outputs
 print("making outputs")
 #Data quality output
 output = open("tRNA-seq-outputs/data_quality_output.txt", "w")
@@ -145,6 +146,9 @@ output.close()
 
 #Mutations per position output
 #At the same time, making the charging outputs
+#At the same time, making the outputs for mut1, mut2, and MI
+mutation_outputs = [open("tRNA-seq-outputs/mut1_output.txt", "w"), open("tRNA-seq-outputs/mut2_output(only stops).txt", "w"), open("tRNA-seq-outputs/MI_output.txt", "w")]
+
 print("making per sequence outputs")
 print(len(mutationIsodecoders))
 counter = 0
@@ -205,6 +209,9 @@ for decoder in mutationIsodecoders:
         charging_output.write(str(elem[0]) + "\t" + str(elem[1]) + "\t" + str(sum(elem)) + \
                               "\t" + mutationFraction + "\t")
     charging_output.write("\n")
+    to_write_to_mutation_outputs = ["", "", ""]
+    for ii in range(3):
+        to_write_to_mutation_outputs[ii] += decoder
     for i in range(len(SEQ)):
         output.write(str(i) + "\t" + SEQ[i] + "\t")
         mutLists = GRAND[i]
@@ -214,18 +221,25 @@ for decoder in mutationIsodecoders:
             mutFrac = "0"
             if sum(mutList) > 0:
                 mutFrac = (str(float(sum(mutList) - mutList[nucIndexes[SEQ[i]]])/float(sum(mutList))))
+            to_write_to_mutation_outputs[0] += "\t" + mutFrac
             output.write(mutFrac + "\t")
             if i != len(SEQ) - 1:
                 nextTotal = sum(GRAND[i + 1][mutList_index])
                 if nextTotal > 0:
                     stop = 1 - float(sum(mutList))/float(nextTotal)
                     WC_mut = float(sum(mutList) - mutList[nucIndexes[SEQ[i]]])/float(nextTotal)
+                    to_write_to_mutation_outputs[1] += "\t" + str(WC_mut)
                     output.write(str(stop) + "\t" + str(WC_mut) + "\t" + str(WC_mut + stop) + "\t\t")
+                    to_write_to_mutation_outputs[2] += "\t" + str(WC_mut + stop)
                 else:
                     output.write("\t\t\t\t")
             else:
                 output.write("\t\t\t\t")
         output.write("\n")
+    for i in range(3):
+        mutation_outputs[i].write(to_write_to_mutation_outputs[i] + "\n")
     output.close()
+for i in range(3):
+    mutation_outputs[i].close()
 
 print("done :)")
